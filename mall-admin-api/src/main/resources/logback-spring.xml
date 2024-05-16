@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 - 2024 yingtingxu(徐应庭). All rights reserved.
+  -->
+
+<configuration debug="false" scan="true" scanPeriod="60 seconds">
+    <!--https://github.com/spring-projects/spring-boot/tree/master/spring-boot-project/spring-boot/src/main/resources/org/springframework/boot/logging/logback-->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <if condition='isDefined("deployRoot")'>
+        <then>
+            <property name="logging.maxDays" value="30"/>
+            <property name="logging.maxFileSize" value="500MB"/>
+            <appender name="FILE_APPENDER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${deployRoot}/logs/%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>${logging.maxFileSize}</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                    <maxHistory>${logging.maxDays}</maxHistory>
+                </rollingPolicy>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${FILE_LOG_PATTERN}</pattern>
+                </encoder>
+                <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+                    <evaluator>
+                        <expression>org.apache.catalina.connector.ClientAbortException.class.isInstance(throwable)
+                        </expression>
+                    </evaluator>
+                    <onMatch>DENY</onMatch>
+                </filter>
+            </appender>
+            <root>
+                <appender-ref ref="FILE_APPENDER"/>
+            </root>
+        </then>
+        <else>
+            <appender name="CONSOLE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                </encoder>
+                <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+                    <evaluator>
+                        <expression>org.apache.catalina.connector.ClientAbortException.class.isInstance(throwable)
+                        </expression>
+                    </evaluator>
+                    <onMatch>DENY</onMatch>
+                </filter>
+            </appender>
+            <root>
+                <appender-ref ref="CONSOLE_APPENDER"/>
+            </root>
+        </else>
+    </if>
+
+    <logger name="com.mall" level="DEBUG"/>
+    <logger name="org.springframework.transaction" level="DEBUG"/>
+
+    <root>
+        <level value="INFO"/>
+    </root>
+</configuration>

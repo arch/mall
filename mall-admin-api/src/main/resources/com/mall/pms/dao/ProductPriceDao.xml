@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 - 2024 yingtingxu(徐应庭). All rights reserved.
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.pms.dao.ProductPriceDao">
+    <!--批量新增回写主键支持-->
+    <insert id="insertMemberPrices">
+        INSERT INTO pms_member_price (product_id, member_level_id, member_price,member_level_name) VALUES
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.productId,jdbcType=BIGINT},
+            #{item.memberLevelId,jdbcType=BIGINT},
+            #{item.memberPrice,jdbcType=DECIMAL},
+            #{item.memberLevelName,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+    <insert id="insertLadderPrices">
+        INSERT INTO pms_product_ladder (product_id, count, discount, price) VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.productId,jdbcType=BIGINT},
+            #{item.count,jdbcType=INTEGER},
+            #{item.discount,jdbcType=DECIMAL},
+            #{item.price,jdbcType=DECIMAL})
+        </foreach>
+    </insert>
+    <insert id="insertFullReductionPrices">
+        INSERT INTO pms_product_full_reduction (product_id, full_price, reduce_price) VALUES
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.productId,jdbcType=BIGINT},
+            #{item.fullPrice,jdbcType=DECIMAL},
+            #{item.reducePrice,jdbcType=DECIMAL})
+        </foreach>
+    </insert>
+</mapper>

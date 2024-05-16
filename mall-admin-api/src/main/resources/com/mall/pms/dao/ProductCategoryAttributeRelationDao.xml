@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 - 2024 yingtingxu(徐应庭). All rights reserved.
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.pms.dao.ProductCategoryAttributeRelationDao">
+    <!--批量新增回写主键支持-->
+    <insert id="insertList">
+        INSERT INTO pms_product_category_attribute_relation (category_id, attribute_id) VALUES
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.categoryId,jdbcType=BIGINT},
+            #{item.attributeId,jdbcType=BIGINT})
+        </foreach>
+    </insert>
+</mapper>

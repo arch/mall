@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 - 2024 yingtingxu(徐应庭). All rights reserved.
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.pms.dao.ProductAttributeDao">
+    <resultMap id="CategoryWithAttributesResult"
+               type="com.mall.pms.dto.ProductAttributeCategoryDto"
+               extends="com.mall.mapper.PmsProductAttributeCategoryMapper.PmsProductAttributeCategoryResult">
+        <collection property="attributes"
+                    resultMap="com.mall.mapper.PmsProductAttributeMapper.PmsProductAttributeResult"
+                    columnPrefix="attr_" />
+    </resultMap>
+    <select id="selectCategoryWithAttributes" resultMap="CategoryWithAttributesResult">
+        SELECT
+            pac.id,
+            pac.name,
+            pa.id attr_id,
+            pa.name attr_name
+        FROM
+            pms_product_attribute_category pac
+            LEFT JOIN pms_product_attribute pa ON pac.id = pa.attribute_category_id
+        AND pa.type=1;
+    </select>
+    <select id="getAttributes" resultType="com.mall.pms.dto.ProductAttribute">
+        SELECT
+            pa.id  attributeId,
+            pac.id categoryId
+        FROM
+            pms_product_category_attribute_relation pcar
+            LEFT JOIN pms_product_attribute pa ON pa.id = pcar.attribute_id
+            LEFT JOIN pms_product_attribute_category pac ON pa.attribute_category_id = pac.id
+        WHERE
+            pcar.category_id = #{id}
+    </select>
+</mapper>

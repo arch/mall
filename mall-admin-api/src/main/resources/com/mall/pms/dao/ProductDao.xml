@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 - 2024 yingtingxu(徐应庭). All rights reserved.
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.pms.dao.ProductDao">
+    <resultMap id="ProductCategoryTreeDtoResult" type="com.mall.pms.dto.ProductCategoryTreeDto"
+               extends="com.mall.mapper.PmsProductCategoryMapper.PmsProductCategoryResult">
+        <collection property="children"
+                    resultMap="com.mall.mapper.PmsProductCategoryMapper.PmsProductCategoryResult"
+                    columnPrefix="child_" />
+    </resultMap>
+    <resultMap id="ProductEditDtoResult" type="com.mall.pms.dto.ProductEditDto" extends="com.mall.mapper.PmsProductMapper.PmsProductResult">
+        <result column="categoryParentId" jdbcType="BIGINT" property="categoryParentId" />
+        <collection property="productLadders"
+                    columnPrefix="ladder_"
+                    resultMap="com.mall.mapper.PmsProductLadderMapper.PmsProductLadderResult" />
+        <collection property="productFullReductions"
+                    columnPrefix="full_"
+                    resultMap="com.mall.mapper.PmsProductFullReductionMapper.PmsProductFullReductionResult" />
+        <collection property="memberPrices"
+                    columnPrefix="member_"
+                    resultMap="com.mall.mapper.PmsMemberPriceMapper.PmsMemberPriceResult" />
+        <collection property="skuStocks"
+                    columnPrefix="sku_"
+                    resultMap="com.mall.mapper.PmsSkuStockMapper.PmsSkuStockResult" />
+        <collection property="productAttributeValues"
+                    columnPrefix="attribute_"
+                    resultMap="com.mall.mapper.PmsProductAttributeValueMapper.PmsProductAttributeValueResult" />
+        <collection property="subjectProductRelations"
+                    column="{productId=id}"
+                    select="selectSubjectProductRelationByProductId" />
+        <collection property="preferenceAreaProductRelations"
+                    column="{productId=id}"
+                    select="selectPreferenceAreaProductRelationByProductId"/>
+    </resultMap>
+    <select id="selectCategoryTree" resultMap="ProductCategoryTreeDtoResult">
+        select
+            c1.id,
+            c1.parent_id,
+            c1.name,
+            c1.level,
+            c1.product_count,
+            c1.product_unit,
+            c1.nav_status,
+            c1.show_status,
+            c1.sort,
+            c1.icon,
+            c1.keywords,
+            c1.description,
+            c2.id               child_id,
+            c2.parent_id        child_parent_id,
+            c2.name             child_name,
+            c2.level            child_level,
+            c2.product_count    child_product_count,
+            c2.product_unit     child_product_unit,
+            c2.nav_status       child_nav_status,
+            c2.show_status      child_show_status,
+            c2.sort             child_sort,
+            c2.icon             child_icon,
+            c2.keywords         child_keywords,
+            c2.description      child_description
+        from pms_product_category c1 left join pms_product_category c2 on c1.id = c2.parent_id
+        where c1.parent_id = 0
+    </select>
+
+    <select id="getEdit" resultMap="ProductEditDtoResult">
+        SELECT *,
+            pc.parent_id categoryParentId,
+            l.id ladder_id,l.product_id ladder_product_id,l.discount ladder_discount,l.count ladder_count,l.price ladder_price,
+            pf.id full_id,pf.product_id full_product_id,pf.full_price full_full_price,pf.reduce_price full_reduce_price,
+            m.id member_id,m.product_id member_product_id,m.member_level_id member_member_level_id,m.member_price member_member_price,m.member_level_name member_member_level_name,
+            s.id sku_id,s.product_id sku_product_id,s.price sku_price,s.low_stock sku_low_stock,s.pic sku_pic,s.sale sku_sale,s.sku_code sku_sku_code,s.stock sku_stock,s.sp_data sku_sp_data,
+            a.id attribute_id,a.product_id attribute_product_id,a.product_attribute_id attribute_product_attribute_id,a.value attribute_value
+        FROM pms_product p
+        LEFT JOIN pms_product_category pc on pc.id = p.category_id
+        LEFT JOIN pms_product_ladder l ON p.id = l.product_id
+        LEFT JOIN pms_product_full_reduction pf ON pf.product_id=p.id
+        LEFT JOIN pms_member_price m ON m.product_id = p.id
+        LEFT JOIN pms_sku_stock s ON s.product_id = p.id
+        LEFT JOIN pms_product_attribute_value a ON a.product_id=p.id
+        WHERE p.id=#{id};
+    </select>
+
+    <select id="selectSubjectProductRelationByProductId"
+            resultMap="com.mall.mapper.CmsSubjectProductRelationMapper.CmsSubjectProductRelationResult">
+        select * from cms_subject_product_relation where product_id=#{productId}
+    </select>
+    <select id="selectPreferenceAreaProductRelationByProductId"
+            resultMap="com.mall.mapper.CmsPreferenceAreaProductRelationMapper.CmsPreferenceAreaProductRelationResult">
+        select * from cms_preference_area_product_relation where product_id=#{productId}
+    </select>
+
+    <insert id="insertAttributeValues">
+        insert into pms_product_attribute_value (product_id,product_attribute_id,value) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.productId,jdbcType=BIGINT},
+            #{item.productAttributeId,jdbcType=BIGINT},
+            #{item.value,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <insert id="insertSubjectRelation">
+        insert into cms_subject_product_relation (subject_id, product_id) values
+        <foreach collection="list" item="item" separator="," index="index">
+            (#{item.subjectId,jdbcType=BIGINT},
+            #{item.productId,jdbcType=BIGINT})
+        </foreach>
+    </insert>
+
+    <insert id="insertPreferenceAreaRelation">
+        insert into cms_prefrence_area_product_relation (prefrence_area_id, product_id) values
+        <foreach collection="list" item="item" separator="," index="index">
+            (#{item.preferenceAreaId,jdbcType=BIGINT},
+            #{item.productId,jdbcType=BIGINT})
+        </foreach>
+    </insert>
+
+    <insert id="insertVerifyRecord">
+        insert into pms_product_vertify_record (product_id, create_time, vertify_man,status, detail) values
+        <foreach collection="list" separator="," item="item" index="index">
+            (#{item.productId,jdbcType=BIGINT},
+            #{item.createTime,jdbcType=TIMESTAMP},
+            #{item.vertifyMan,jdbcType=VARCHAR},
+            #{item.status,jdbcType=INTEGER},
+            #{item.detail,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+</mapper>
